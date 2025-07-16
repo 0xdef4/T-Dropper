@@ -142,7 +142,7 @@ contract TDropperTest is Test {
                    CHECKRECIPIENTSANDAMOUNTS FUNCTION
     //////////////////////////////////////////////////////////////*/
 
-    function test_RecipientsShouldContainSomething() public {
+    function test_RecipientsShouldContainSomething() public view {
         address[] memory recipients = new address[](0);
         uint256[] memory amounts = new uint256[](3);
         amounts[0] = 100;
@@ -154,7 +154,7 @@ contract TDropperTest is Test {
         assertEq(tDropper.isValidRecipientsAndAmounts(recipients, amounts, totalAmounts), false);
     }
 
-    function test_ShouldHaveSameLength_isValidRecipientsAndAmounts() public {
+    function test_ShouldHaveSameLength_isValidRecipientsAndAmounts() public view {
         address[] memory recipients = new address[](2);
         recipients[0] = tom;
         recipients[1] = alice;
@@ -169,7 +169,7 @@ contract TDropperTest is Test {
         assertEq(tDropper.isValidRecipientsAndAmounts(recipients, amounts, totalAmounts), false);
     }
 
-    function test_NoZeroAddressInRecipients() public {
+    function test_NoZeroAddressInRecipients() public view {
         address[] memory recipients = new address[](3);
         recipients[0] = address(0);
         recipients[1] = alice;
@@ -185,7 +185,7 @@ contract TDropperTest is Test {
         assertEq(tDropper.isValidRecipientsAndAmounts(recipients, amounts, totalAmounts), false);
     }
 
-    function test_NoZeroAddressInAmounts() public {
+    function test_NoZeroAddressInAmounts() public view {
         address[] memory recipients = new address[](3);
         recipients[0] = tom;
         recipients[1] = alice;
@@ -201,7 +201,7 @@ contract TDropperTest is Test {
         assertEq(tDropper.isValidRecipientsAndAmounts(recipients, amounts, totalAmounts), false);
     }
 
-    function test_NoDuplicateRecipients() public {
+    function test_NoDuplicateRecipients() public view {
         address[] memory recipients = new address[](3);
         recipients[0] = tom;
         recipients[1] = tom;
@@ -217,7 +217,7 @@ contract TDropperTest is Test {
         assertEq(tDropper.isValidRecipientsAndAmounts(recipients, amounts, totalAmounts), false);
     }
 
-    function test_TotalAmountsShouldMatchCalculated() public {
+    function test_TotalAmountsShouldMatchCalculated() public view {
         address[] memory recipients = new address[](3);
         recipients[0] = tom;
         recipients[1] = alice;
