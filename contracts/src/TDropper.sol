@@ -5,7 +5,12 @@ import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ITDropper} from "./interfaces/ITDropper.sol";
 
-contract TDropper is ITDropper {
+/**
+ * @title TDropper
+ * @author 0xdef4
+ * @notice This contract is used to airdrop ERC20 tokens and to validate the list before airdrop
+ */
+contract TDropper {
     using SafeERC20 for IERC20;
 
     error TDropper__TokenAddressIsZero();
@@ -13,6 +18,13 @@ contract TDropper is ITDropper {
     error TDropper__RecipientAddressHasZeroAddress();
     error TDropper__TotalDoesntMatch();
 
+    /**
+     * @notice This function is meant to be used to airdrop ERC20 tokens to a list of users
+     * @param tokenAddress The address of the ERC20 token to be airdropped
+     * @param recipients The list of users addresses that will receive the airdrop
+     * @param amounts The list of amounts to be airdropped to each user
+     * @param totalAmounts The total amount of tokens to be airdropped
+     */
     function airdropERC20(
         address tokenAddress,
         address[] calldata recipients,
@@ -44,6 +56,12 @@ contract TDropper is ITDropper {
         }
     }
 
+    /**
+     * @notice This function is meant to check the recipients and amounts list before calling the actual `airdropERC20` (to save gas).
+     * @param recipients The list of users addresses that will receive the airdrop
+     * @param amounts The list of amounts to be airdropped to each user
+     * @param totalAmounts The total amount of tokens to be airdropped
+     */
     function checkRecipientsAndAmounts(address[] calldata recipients, uint256[] calldata amounts, uint256 totalAmounts)
         external
         pure
