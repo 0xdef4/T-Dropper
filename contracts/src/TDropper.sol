@@ -8,7 +8,7 @@ import {ITDropper} from "./interfaces/ITDropper.sol";
 /**
  * @title TDropper
  * @author 0xdef4
- * @notice This contract is used to airdrop ERC20 tokens and to validate the list before airdrop
+ * @notice This contract is used to airdrop ERC20 tokens to corresponding recipients.
  */
 contract TDropper {
     using SafeERC20 for IERC20;
@@ -61,12 +61,13 @@ contract TDropper {
      * @param recipients The list of users addresses that will receive the airdrop
      * @param amounts The list of amounts to be airdropped to each user
      * @param totalAmounts The total amount of tokens to be airdropped
+     * @return A boolean indicating whether the recipients and amounts array is valid or not
      */
-    function checkRecipientsAndAmounts(address[] calldata recipients, uint256[] calldata amounts, uint256 totalAmounts)
-        external
-        pure
-        returns (bool)
-    {
+    function isValidRecipientsAndAmounts(
+        address[] calldata recipients,
+        uint256[] calldata amounts,
+        uint256 totalAmounts
+    ) external pure returns (bool) {
         uint256 calculatedTotal = 0;
         if (recipients.length == 0) {
             return false;
