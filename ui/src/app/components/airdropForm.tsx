@@ -1,15 +1,50 @@
-import { useState } from "react";
+import {
+  useWriteContract,
+  useChainId,
+  useReadContract,
+  useConfig,
+  useAccount,
+} from "wagmi";
+import { readContract } from "@wagmi/core";
+import { useState, useEffect } from "react";
 import InputField from "./form/inputField";
+import { chainIdToDeployed, TDropperABI, ERC20MockABI } from "@/constants";
 
 const AirdropForm = () => {
   const [tokenAddress, setTokenAddress] = useState("");
   const [recipients, setRecipients] = useState("");
   const [amounts, setAmounts] = useState("");
+  const [totalAmount, setTotalAmount] = useState(BigInt(0));
+  const { writeContract } = useWriteContract();
+  const config = useConfig();
+  const account = useAccount();
+  const chainId = useChainId();
 
-  const handleOnSubmit = () => {
-    console.log(tokenAddress);
-    console.log(recipients);
-    console.log(amounts);
+  useEffect(() => {
+    // Add the total amounts
+    const split = amounts
+      .split(/[\n,]+/) // split on commas or new lines
+      .map((val) => val.trim()) // trim whitespace
+      .filter((val) => val !== "") // remove empty strings
+      .map((val) => BigInt(val)); // convert to BigInt for wei amounts
+
+    const total = split.reduce((acc, curr) => acc + curr, BigInt(0));
+    // console.log(total);
+    setTotalAmount(total);
+  }, [amounts]);
+
+  const handleOnSubmit = async () => {
+    const allowance = await readContract(config, {
+      abi: ERC20MockABI,
+      address: "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+      functionName: "allowance",
+      args: [account.address, chainIdToDeployed[chainId].TDropper],
+    });
+
+    // if (allowance < totalAmount) {
+    // approve
+    // }
+    // regardless of what happens, we call 'airdropERC20' anyway.
   };
 
   return (

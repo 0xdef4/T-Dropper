@@ -17,7 +17,7 @@ const InputField = (props: inputField) => {
         id="inputField"
         placeholder={props.placeholder}
         rows={props.rows}
-        className="p-2 border border-gray-300 rounded-lg"
+        className="p-2 border border-gray-300 rounded-lg outline-none"
         onChange={props.onChange}
       />
     </div>
