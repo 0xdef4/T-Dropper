@@ -64,8 +64,7 @@ export const TDropperABI = [
   { type: "error", name: "TDropper__TotalDoesntMatch", inputs: [] },
 ];
 
-export const ERC20MockABI = [
-  { type: "constructor", inputs: [], stateMutability: "nonpayable" },
+export const Erc20ABI = [
   {
     type: "function",
     name: "allowance",
@@ -95,30 +94,10 @@ export const ERC20MockABI = [
   },
   {
     type: "function",
-    name: "burn",
-    inputs: [
-      { name: "account", type: "address", internalType: "address" },
-      { name: "amount", type: "uint256", internalType: "uint256" },
-    ],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-  {
-    type: "function",
     name: "decimals",
     inputs: [],
     outputs: [{ name: "", type: "uint8", internalType: "uint8" }],
     stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "mint",
-    inputs: [
-      { name: "account", type: "address", internalType: "address" },
-      { name: "amount", type: "uint256", internalType: "uint256" },
-    ],
-    outputs: [],
-    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -250,4 +229,4 @@ export const ERC20MockABI = [
     name: "ERC20InvalidSpender",
     inputs: [{ name: "spender", type: "address", internalType: "address" }],
   },
-];
+] as const;

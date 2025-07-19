@@ -1,50 +1,75 @@
-import {
-  useWriteContract,
-  useChainId,
-  useReadContract,
-  useConfig,
-  useAccount,
-} from "wagmi";
-import { readContract } from "@wagmi/core";
-import { useState, useEffect } from "react";
+import { useWriteContract, useChainId, useConfig, useAccount } from "wagmi";
+import { readContract, waitForTransactionReceipt } from "@wagmi/core";
+import { useState, useEffect, useMemo } from "react";
 import InputField from "./form/inputField";
-import { chainIdToDeployed, TDropperABI, ERC20MockABI } from "@/constants";
+import { chainIdToDeployed, TDropperABI, Erc20ABI } from "@/constants";
+import { calculateTotal, formatTokenAmount } from "@/app/utils";
 
 const AirdropForm = () => {
   const [tokenAddress, setTokenAddress] = useState("");
   const [recipients, setRecipients] = useState("");
   const [amounts, setAmounts] = useState("");
-  const [totalAmount, setTotalAmount] = useState(BigInt(0));
-  const { writeContract } = useWriteContract();
+  const { writeContractAsync, isPending } = useWriteContract();
   const config = useConfig();
   const account = useAccount();
   const chainId = useChainId();
 
-  useEffect(() => {
-    // Add the total amounts
-    const split = amounts
-      .split(/[\n,]+/) // split on commas or new lines
-      .map((val) => val.trim()) // trim whitespace
-      .filter((val) => val !== "") // remove empty strings
-      .map((val) => BigInt(val)); // convert to BigInt for wei amounts
-
-    const total = split.reduce((acc, curr) => acc + curr, BigInt(0));
-    // console.log(total);
-    setTotalAmount(total);
-  }, [amounts]);
+  const totalAmount: number = useMemo(() => calculateTotal(amounts), [amounts]);
 
   const handleOnSubmit = async () => {
+    // check allowance
     const allowance = await readContract(config, {
-      abi: ERC20MockABI,
-      address: "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+      abi: Erc20ABI,
+      address: tokenAddress as `0x${string}`,
       functionName: "allowance",
-      args: [account.address, chainIdToDeployed[chainId].TDropper],
+      args: [
+        account.address!,
+        chainIdToDeployed[chainId].TDropper as `0x${string}`,
+      ],
     });
 
-    // if (allowance < totalAmount) {
-    // approve
-    // }
-    // regardless of what happens, we call 'airdropERC20' anyway.
+    // console.log("allowance: ", allowance);
+    // console.log("BigInt(totalAmount): ", BigInt(totalAmount));
+
+    if (allowance < BigInt(totalAmount)) {
+      // call approve
+      const approvalHash = await writeContractAsync({
+        abi: Erc20ABI,
+        address: tokenAddress as `0x${string}`,
+        functionName: "approve",
+        args: [
+          chainIdToDeployed[chainId].TDropper as `0x${string}`,
+          BigInt(totalAmount) - allowance,
+        ],
+      });
+      const approvalReceipt = await waitForTransactionReceipt(config, {
+        hash: approvalHash,
+      });
+      console.log("approvalReceipt: ", approvalReceipt);
+    }
+
+    // regardless of what happens, call 'airdropERC20' anyway.
+    const airdropERC20Hash = await writeContractAsync({
+      abi: TDropperABI,
+      address: chainIdToDeployed[chainId].TDropper as `0x${string}`,
+      functionName: "airdropERC20",
+      args: [
+        tokenAddress as `0x${string}`,
+        recipients
+          .split(/[,\n]+/)
+          .map((addr) => addr.trim())
+          .filter((addr) => addr !== ""),
+        amounts
+          .split(/[,\n]+/)
+          .map((amt) => amt.trim())
+          .filter((amt) => amt !== ""),
+        BigInt(totalAmount),
+      ],
+    });
+    const airdropERC20Receipt = await waitForTransactionReceipt(config, {
+      hash: airdropERC20Hash,
+    });
+    console.log("airdropERC20Receipt: ", airdropERC20Receipt);
   };
 
   return (
@@ -69,6 +94,29 @@ const AirdropForm = () => {
           rows={4}
           onChange={(e) => setAmounts(e.target.value)}
         />
+      </div>
+      <div className="bg-white border border-zinc-300 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-zinc-900 mb-3">
+          Transaction Details
+        </h3>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-zinc-600">Token Name:</span>
+            <span className="font-mono text-zinc-900">
+              {/* {tokenData?.[1]?.result as string} */}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-zinc-600">Amount (wei):</span>
+            {/* <span className="font-mono text-zinc-900">{total}</span> */}
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-zinc-600">Amount (tokens):</span>
+            <span className="font-mono text-zinc-900">
+              {/* {formatTokenAmount(total, tokenData?.[0]?.result as number)} */}
+            </span>
+          </div>
+        </div>
       </div>
       <div>
         <button
