@@ -1,22 +1,77 @@
-import { useWriteContract, useChainId, useConfig, useAccount } from "wagmi";
-import { readContract, waitForTransactionReceipt } from "@wagmi/core";
 import { useState, useEffect, useMemo } from "react";
+import {
+  useWriteContract,
+  useReadContracts,
+  useChainId,
+  useConfig,
+  useAccount,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { readContract } from "@wagmi/core";
 import InputField from "./form/inputField";
 import { chainIdToDeployed, TDropperABI, Erc20ABI } from "@/constants";
 import { calculateTotal, formatTokenAmount } from "@/app/utils";
+import { CgSpinner } from "@/app/icons";
 
 const AirdropForm = () => {
   const [tokenAddress, setTokenAddress] = useState("");
   const [recipients, setRecipients] = useState("");
   const [amounts, setAmounts] = useState("");
-  const { writeContractAsync, isPending } = useWriteContract();
+
   const config = useConfig();
   const account = useAccount();
   const chainId = useChainId();
 
+  const [hasEnoughTokens, setHasEnoughTokens] = useState(true);
+
+  const {
+    data: hash,
+    isPending,
+    error,
+    writeContractAsync,
+  } = useWriteContract();
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    isError,
+  } = useWaitForTransactionReceipt({
+    confirmations: 1,
+    hash,
+  });
+
+  const { data: tokenData } = useReadContracts({
+    contracts: [
+      {
+        address: tokenAddress as `0x${string}`,
+        abi: Erc20ABI,
+        functionName: "decimals",
+      },
+      {
+        address: tokenAddress as `0x${string}`,
+        abi: Erc20ABI,
+        functionName: "name",
+      },
+      {
+        address: tokenAddress as `0x${string}`,
+        abi: Erc20ABI,
+        functionName: "balanceOf",
+        args: [account.address!],
+      },
+    ],
+  });
+
   const totalAmount: number = useMemo(() => calculateTotal(amounts), [amounts]);
 
-  const handleOnSubmit = async () => {
+  const handleSubmit = async () => {
+    if (!chainIdToDeployed[chainId].TDropper) {
+      alert("This chain Doesn't have TDropper!");
+      return 0;
+    }
+    if (!tokenAddress || !recipients || !amounts) {
+      alert("All the field should be filled first :D");
+      return 0;
+    }
+
     // check allowance
     const allowance = await readContract(config, {
       abi: Erc20ABI,
@@ -27,9 +82,6 @@ const AirdropForm = () => {
         chainIdToDeployed[chainId].TDropper as `0x${string}`,
       ],
     });
-
-    // console.log("allowance: ", allowance);
-    // console.log("BigInt(totalAmount): ", BigInt(totalAmount));
 
     if (allowance < BigInt(totalAmount)) {
       // call approve
@@ -42,10 +94,6 @@ const AirdropForm = () => {
           BigInt(totalAmount) - allowance,
         ],
       });
-      const approvalReceipt = await waitForTransactionReceipt(config, {
-        hash: approvalHash,
-      });
-      console.log("approvalReceipt: ", approvalReceipt);
     }
 
     // regardless of what happens, call 'airdropERC20' anyway.
@@ -66,11 +114,50 @@ const AirdropForm = () => {
         BigInt(totalAmount),
       ],
     });
-    const airdropERC20Receipt = await waitForTransactionReceipt(config, {
-      hash: airdropERC20Hash,
-    });
-    console.log("airdropERC20Receipt: ", airdropERC20Receipt);
   };
+
+  function getButtonContent() {
+    if (isPending)
+      return (
+        <div className="flex items-center justify-center gap-2 w-full">
+          <CgSpinner className="animate-spin" size={20} />
+          <span>Confirming in wallet...</span>
+        </div>
+      );
+    if (isConfirming)
+      return (
+        <div className="flex items-center justify-center gap-2 w-full">
+          <CgSpinner className="animate-spin" size={20} />
+          <span>Waiting for transaction to be included...</span>
+        </div>
+      );
+    if (error || isError) {
+      console.log(error);
+      return (
+        <div className="flex items-center justify-center gap-2 w-full">
+          <span>Error, see console.</span>
+        </div>
+      );
+    }
+    if (isConfirmed) {
+      return "Transaction confirmed.";
+    }
+    return "Send Tokens";
+  }
+
+  useEffect(() => {
+    if (
+      tokenAddress &&
+      totalAmount > 0 &&
+      (tokenData?.[2]?.result as bigint) !== undefined
+    ) {
+      const userBalance = tokenData?.[2].result as bigint;
+
+      setHasEnoughTokens(userBalance >= BigInt(totalAmount));
+    } else {
+      setHasEnoughTokens(true);
+    }
+  }, [tokenAddress, totalAmount, tokenData]);
 
   return (
     <div className="px-8 py-10 flex flex-col border-2 rounded-2xl border-blue-400 ring-4 ring-blue-200 text-gray-700">
@@ -103,27 +190,38 @@ const AirdropForm = () => {
           <div className="flex justify-between items-center">
             <span className="text-sm text-zinc-600">Token Name:</span>
             <span className="font-mono text-zinc-900">
-              {/* {tokenData?.[1]?.result as string} */}
+              {tokenData?.[1]?.result as string}
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-zinc-600">Amount (wei):</span>
-            {/* <span className="font-mono text-zinc-900">{total}</span> */}
+            <span className="font-mono text-zinc-900">{totalAmount}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-zinc-600">Amount (tokens):</span>
             <span className="font-mono text-zinc-900">
-              {/* {formatTokenAmount(total, tokenData?.[0]?.result as number)} */}
+              {formatTokenAmount(totalAmount, tokenData?.[0]?.result as number)}
             </span>
           </div>
         </div>
       </div>
-      <div>
-        <button
+      <div className="mt-8">
+        {/* <button
           className="bg-blue-500 hover:bg-blue-600 text-white w-full text-center py-3 rounded-md delay-100 font-semibold cursor-pointer"
-          onClick={handleOnSubmit}
+          onClick={handleSubmit}
         >
           Send Tokens
+        </button> */}
+        <button
+          className={`bg-blue-500 hover:bg-blue-600 text-white w-full text-center py-3 rounded-md delay-100 font-semibold cursor-pointer`}
+          onClick={handleSubmit}
+          disabled={isPending || (!hasEnoughTokens && tokenAddress !== "")}
+        >
+          {isPending || error || isConfirming
+            ? getButtonContent()
+            : !hasEnoughTokens && tokenAddress
+            ? "Insufficient token balance"
+            : "Send Tokens"}
         </button>
       </div>
     </div>
