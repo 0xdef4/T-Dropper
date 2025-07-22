@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useMemo } from "react";
 import {
   useWriteContract,
@@ -206,12 +208,6 @@ const AirdropForm = () => {
         </div>
       </div>
       <div className="mt-8">
-        {/* <button
-          className="bg-blue-500 hover:bg-blue-600 text-white w-full text-center py-3 rounded-md delay-100 font-semibold cursor-pointer"
-          onClick={handleSubmit}
-        >
-          Send Tokens
-        </button> */}
         <button
           className={`bg-blue-500 hover:bg-blue-600 text-white w-full text-center py-3 rounded-md delay-100 font-semibold cursor-pointer`}
           onClick={handleSubmit}
