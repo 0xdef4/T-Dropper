@@ -17,6 +17,9 @@ const Headers = () => {
           </a>
         </div>
       </div>
+      <div className="italic text-gray-500 bg-sky-50 p-0.5 rounded-lg">
+        "Airdrop your ERC20 Token with ease!" 🦋
+      </div>
       <ConnectButton />
     </div>
   );

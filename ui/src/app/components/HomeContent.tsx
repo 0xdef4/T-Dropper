@@ -11,8 +11,8 @@ const HomeContent = () => {
       {isConnected ? (
         <AirdropForm />
       ) : (
-        <div className="text-center">
-          Please connect your wallet first... 🙂
+        <div className="text-center font-bold text-2xl">
+          Please connect a wallet first... 🙂
         </div>
       )}
     </>
