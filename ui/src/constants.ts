@@ -8,9 +8,9 @@ export const chainIdToDeployed: ChainIdToDeployed = {
   31337: {
     TDropper: "0x5fbdb2315678afecb367f032d93f642f64180aa3",
   },
-  //   11155111: {
-  //     TDropper: 0x456,
-  //   },
+  11155111: {
+    TDropper: "0x36F9c299D259B48e894Cc34eC6ef4455ff41e8fc",
+  },
 };
 
 export const TDropperABI = [
