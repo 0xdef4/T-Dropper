@@ -95,4 +95,9 @@ pnpm dev
 
 ## Author
 
-Built by **0xdef4**
+Built by **0xdef4** as a learning and practical project.
+
+Things to keep in mind when referencing this code,
+
+1. The Smart contract code, although tested, is still non-audited code. Use it with caution.
+2. Only deployed to Anvil and Sepolia testnet chain for security reasons.
